@@ -30,6 +30,13 @@ func (c *Client) Initialize() error {
 
 // SendMessage sends  the specified message to the telegram chat specified in Options
 func (c *Client) SendMessage(m string) error {
+	if c.Options == nil {
+		err := c.Initialize()
+		if err != nil {
+			return err
+		}
+	}
+
 	if c.Options.BotID == "" {
 		return errors.New("BotID has not been specified")
 	}
@@ -38,7 +45,7 @@ func (c *Client) SendMessage(m string) error {
 	}
 
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?text=%s&chat_id=%s", c.Options.BotID, m, c.Options.ChatID)
-	c.logDebug("Sending URL ", url)
+	//c.logDebug("Sending URL ", url)
 	client := http.Client{}
 	response, err := client.Get(url)
 	if err != nil {
@@ -51,15 +58,17 @@ func (c *Client) SendMessage(m string) error {
 	if result.OK {
 		return nil
 	}
+	c.logError("Error sending telegram message.", result.Description, "[", result.ErrorCode, "]")
 	return fmt.Errorf("%s [Error Code: %d]", result.Description, result.ErrorCode)
 }
+
 func (c *Client) logDebug(v ...interface{}) {
 	if c.VerboseLogging {
 		a := fmt.Sprint(v...)
 		if c.Logger == nil {
 			log.Println(a)
 		} else {
-			c.Logger.Info("Finder: ", a)
+			c.Logger.Info("Telegram: ", a)
 		}
 	}
 }
